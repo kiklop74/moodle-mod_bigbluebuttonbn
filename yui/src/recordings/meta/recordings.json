@@ -3,6 +3,7 @@
         "requires": [
             "base",
             "node",
+            "event",
             "datasource-get",
             "datasource-jsonschema",
             "datasource-polling",

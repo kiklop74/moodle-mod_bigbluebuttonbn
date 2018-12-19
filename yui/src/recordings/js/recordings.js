@@ -25,6 +25,7 @@ M.mod_bigbluebuttonbn.recordings = {
     datasource: null,
     locale: 'en',
     datatable: {},
+    table: null,
 
     /**
      * Initialise recordings code.
@@ -42,6 +43,22 @@ M.mod_bigbluebuttonbn.recordings = {
             this.datatable.columns = data.columns;
             this.datatable.data = this.datatableInitFormatDates(data.data);
             this.datatableInit();
+            var searchform = Y.one('#bigbluebuttonbn_recordings_searchform');
+            if (searchform) {
+                searchform.delegate('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    var value = null;
+                    if (e.target.get('id') == 'searchsubmit') {
+                        value = Y.one('#searchtext').get('value');
+                    } else {
+                        Y.one('#searchtext').set('value', '');
+                    }
+
+                    this.filterByText(value);
+                }, 'input[type=submit]', this);
+            }
         }
         M.mod_bigbluebuttonbn.helpers.init();
     },
@@ -57,6 +74,28 @@ M.mod_bigbluebuttonbn.recordings = {
             });
         }
         return data;
+    },
+
+    escapeRegex: function( value ) {
+        return value.replace( /[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&" );
+    },
+
+    filterByText: function (searchvalue) {
+        if (this.table) {
+            this.table.set('data', this.datatable.data);
+            if (searchvalue) {
+                var tlist = this.table.data;
+                var rsearch = new RegExp('<span>.*?' + this.escapeRegex(searchvalue) + '.*?</span>', 'i');
+                var filterdata = tlist.filter({asList: true}, function (item) {
+                    var activity = item.get('activity');
+                    var description = item.get('description');
+                    return (
+                        (activity && rsearch.test(activity)) || (description && rsearch.test(description))
+                    );
+                });
+                this.table.set('data', filterdata);
+            }
+        }
     },
 
     initExtraLanguage: function (Y1) {
@@ -91,6 +130,7 @@ M.mod_bigbluebuttonbn.recordings = {
                 rowsPerPage: 10,
                 paginatorLocation: ['header', 'footer']
             }).render('#bigbluebuttonbn_recordings_table');
+            M.mod_bigbluebuttonbn.recordings.table = table;
             return table;
         });
     },
